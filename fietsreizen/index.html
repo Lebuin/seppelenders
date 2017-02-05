@@ -78,18 +78,50 @@
               });
 
             var routes = [
-                ["Torgny - Knokke", "torknoeter", "A02785"],
-                ["Kopenhagen", "kopenhagen", "324496"],
-                ["Marseille", "marseille", "DD7735"],
-                ["Venetië", "venetie", "208484"],
-                ["Italië", "italia", "DDAB35"],
-                ["Balkan", "balkan", "DDAB35"],
-                ["Rome 1", "rome1", "7FC730"],
-                ["Rome 2", "rome2", "7FC730"],
-                ["Schotland", "schotland", "DD3535"],
+                ["Torgny - Knokke (2010)", "torknoeter", "A02785"],
+                ["Kopenhagen (2012)", "kopenhagen", "324496"],
+                ["Marseille (2013)", "marseille", "DD7735"],
+                ["Venetië (2013)", "venetie", "208484"],
+                ["Italië - Balkan (2014)", "italia-balkan", "DDAB35"],
+                ["Rome (2016)", "rome", "7FC730"],
+                ["Schotland (2017)", "schotland", "DD3535"],
             ];
+            var routeLayers = {};
 
-            for(var i in routes) {
+            function toRGBA(hex) {
+                var rgba = [];
+                for(var i = 0; i < 6; i += 2) {
+                    rgba.push(parseInt(hex.slice(i, i+2), 16));
+                }
+                rgba.push(0.75);
+                return rgba;
+            }
+
+            function switchLayers() {
+                for(var i in layers) {
+                    var element = '#layers input[value="' + layers[i].n.title + '"]'
+                    layers[i].setVisible($(element).is(':checked'));
+                }
+            }
+
+            function toggleRoute(event) {
+                var route = event.target.value;
+                var checked = event.target.checked;
+
+                routeLayers[route].setVisible(checked);
+            }
+
+
+            for(var i in layers) {
+                var value = layers[i].n.title;
+                var checked = (value == defaultLayer) ? 'checked' : '';
+
+                $('#layers > ul').append('<li><label><input type="radio" name="layer" value="' + value + '" ' + checked + '>' + value + '</label></li>');
+            }
+            $(document).on('change', 'input[name="layer"]', switchLayers);
+
+
+            for(i in routes) {
                 var vectorLayer = new ol.layer.Vector({
                     title: routes[i][0],
                     source: new ol.source.KML({
@@ -104,38 +136,15 @@
                         }),
                     }),
                 });
+
+                routeLayers[routes[i][1]] = vectorLayer;
                 map.addLayer(vectorLayer);
+
+                $('#routes > ul').append('<li><label><input type="checkbox" name="route" value="' + routes[i][1] + '" checked>' + routes[i][0] + '</label></li>');
             }
+            $(document).on('change', 'input[name="route"]', toggleRoute);
 
-            function toRGBA(hex) {
-                var rgba = [];
-                for(var i = 0; i < 6; i += 2) {
-                    rgba.push(parseInt(hex.slice(i, i+2), 16));
-                }
-                rgba.push(0.75);
-                return rgba;
-            }
-
-            function switchLayers() {
-                for(var i in layers) {
-                    var element = '#layers input[value="' + layers[i].n.title + '"]'
-                    layers[i].setVisible($(element).is(':checked'))
-                }
-            }
-
-            $(document).on('change', 'input[name="layer"]', switchLayers);
-
-
-            for(i in layers) {
-                var value = layers[i].n.title;
-                var checked = (value == defaultLayer) ? 'checked' : '';
-
-                $('#layers').append('<div><label><input type="radio" name="layer" value="' + value + '" ' + checked + '>' + value + '</label></div>');
-            }
             switchLayers();
-
-
-            //map.on('click', clicked);
         });
     </script>
 
@@ -143,28 +152,33 @@
         body {
             margin: 0px;
             font-family: Open Sans, sans-serif;
-            font-size: 14px;
+            font-size: 12px;
         }
 
-        #coords {
+        #legend {
             position: absolute;
-            left: 10px;
-            bottom: 7px;
-            z-index: 2000;
+            z-index: 100;
+            top: 0;
+            right: 0;
         }
 
-        #layers {
-            position: absolute;
-            top: 0px;
-            right: 0px;
+
+        #layers, #routes {
             padding: 3px 5px 3px 3px;
             color: #ffffff;
-            background: rgba(200, 200, 200, .6);
-            z-index: 100;
+            background: rgba(50, 50, 50, .6);
+            margin: 10px 0;
+            border-radius: 5px 0 0 5px;
         }
 
-        #layers div {
-            margin: 5px;
+        ul {
+            padding: 0;
+            margin: 0;
+            list-style-type: none;
+        }
+
+        li {
+            margin: 2px;
         }
     </style>
 </head>
@@ -172,6 +186,14 @@
 <body>
     <div id="map" class="map"></div>
     <div id="coords"></div>
-    <div id="layers"></div>
+
+    <div id="legend">
+        <div id="layers">
+            <ul></ul>
+        </div>
+        <div id="routes">
+            <ul></ul>
+        </div>
+    </div>
 </body>
 </html>
