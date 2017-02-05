@@ -1,0 +1,170 @@
+<html>
+<head>
+    <title>Seppe Lenders - fietsreizen</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="http://openlayers.org/en/v3.4.0/css/ol.css" type="text/css">
+    <script src="http://openlayers.org/en/v3.4.0/build/ol.js"></script>
+
+    <script>
+
+        var map, layers;
+        var defaultLayer = 'MapBox';
+
+        $(document).ready(function() {
+
+            layers = [
+                new ol.layer.Tile({
+                    title: 'Open Street Map',
+                    source: new ol.source.OSM(),
+                }),
+                new ol.layer.Tile({
+                    title: 'OSM Cycle',
+                    source: new ol.source.OSM({
+                        url: 'http://{a-c}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png'
+                    }),
+                }),
+                /*new ol.layer.Tile({
+                    title: 'Bing Maps',
+                    source: new ol.source.BingMaps({
+                        key: 'Ak-dzM4wZjSqTlzveKz5u0d4IQ4bRzVI309GxmkgSVr1ewS6iPSrOvOKhA-CJlm3',
+                        imagerySet: 'Road',
+                    }),
+                }),*/
+                new ol.layer.Tile({
+                    title: 'MapBox',
+                    source: new ol.source.XYZ({
+                        tileSize: 512,
+                        url: 'https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibGVidWluIiwiYSI6ImNpcG90ZGRsODAwMmZoem5iejVieGNrdjkifQ.vb73zLJdMoc8WiyYLk4SCg',
+                    }),
+                }),
+                new ol.layer.Tile({
+                    title: 'ESRI Topographic',
+                    source: new ol.source.XYZ({
+                        url: 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+                    })
+                }),
+                new ol.layer.Tile({
+                    title: 'ESRI World Imagery',
+                    source: new ol.source.XYZ({
+                        url: 'http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                    })
+                }),
+            ];
+
+            map = new ol.Map({
+                target: 'map',
+                layers: layers,
+                view: new ol.View({
+                    center: ol.proj.transform([14, 48], 'EPSG:4326', 'EPSG:3857'),
+                    zoom: 4,
+                    maxZoom: 19,
+                }),
+                controls: [
+                    new ol.control.Zoom(),
+                    new ol.control.ZoomSlider({
+                        minResolution: 2000,
+                    }),
+                ],
+              });
+
+            var routes = [
+                ["Torgny - Knokke", "torknoeter", "A02785"],
+                ["Kopenhagen", "kopenhagen", "324496"],
+                ["Marseille", "marseille", "DD7735"],
+                ["Venetië", "venetie", "208484"],
+                ["Italië", "italia", "DDAB35"],
+                ["Balkan", "balkan", "DDAB35"],
+                ["Rome 1", "rome1", "7FC730"],
+                ["Rome 2", "rome2", "7FC730"],
+                ["Schotland", "schotland", "DD3535"],
+            ];
+
+            for(var i in routes) {
+                var vectorLayer = new ol.layer.Vector({
+                    title: routes[i][0],
+                    source: new ol.source.KML({
+                        projection: 'EPSG:3857',
+                        url: 'routes/' + routes[i][1] + '.kml',
+                        extractStyles: false,
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: toRGBA(routes[i][2]),
+                            width: 3,
+                        }),
+                    }),
+                });
+                map.addLayer(vectorLayer);
+            }
+
+            function toRGBA(hex) {
+                var rgba = [];
+                for(var i = 0; i < 6; i += 2) {
+                    rgba.push(parseInt(hex.slice(i, i+2), 16));
+                }
+                rgba.push(0.75);
+                return rgba;
+            }
+
+            function switchLayers() {
+                for(var i in layers) {
+                    var element = '#layers input[value="' + layers[i].n.title + '"]'
+                    layers[i].setVisible($(element).is(':checked'))
+                }
+            }
+
+            $(document).on('change', 'input[name="layer"]', switchLayers);
+
+
+            for(var i in layers) {
+                var value = layers[i].n.title;
+                var checked = (value == defaultLayer) ? 'checked' : '';
+
+                $('#layers').append('<div><label><input type="radio" name="layer" value="' + value + '" ' + checked + '>' + value + '</label></div>');
+            }
+            switchLayers();
+
+
+            //map.on('click', clicked);
+        });
+    </script>
+
+    <style type="text/css">
+        body {
+            margin: 0px;
+            font-family: Open Sans, sans-serif;
+            font-size: 14px;
+        }
+
+        #coords {
+            position: absolute;
+            left: 10px;
+            bottom: 7px;
+            z-index: 2000;
+        }
+
+        #layers {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            padding: 3px 5px 3px 3px;
+            color: #ffffff;
+            background: rgba(200, 200, 200, .6);
+            z-index: 100;
+        }
+
+        #layers div {
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map" class="map"></div>
+    <div id="coords"></div>
+    <div id="layers"></div>
+</body>
+</html>
